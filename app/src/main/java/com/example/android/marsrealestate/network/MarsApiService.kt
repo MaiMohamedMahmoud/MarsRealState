@@ -31,5 +31,3 @@ interface MarsApiService {
     @GET("realestate")
     suspend fun getProperties(): List<MarsProperty>
 }
-
-
