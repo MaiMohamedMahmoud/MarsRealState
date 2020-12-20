@@ -24,6 +24,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.android.marsrealestate.network.MarsApi
+import com.example.android.marsrealestate.network.MarsApiFilter
 import com.example.android.marsrealestate.network.MarsProperty
 import kotlinx.coroutines.launch
 import retrofit2.Call
@@ -42,17 +43,36 @@ class OverviewViewModel : ViewModel() {
     val responseMarsProperty: LiveData<List<MarsProperty>>
         get() = _responseMarsObj
 
+    private val _status_navigate = MutableLiveData<MarsProperty>()
+
+    val status_navigate: LiveData<MarsProperty>
+        get() = _status_navigate
+
     /**
      * Call getMarsRealEstateProperties() on init so we can display status immediately.
      */
     init {
-        getMarsRealEstateProperties()
+        _status_navigate.value = null
+        getMarsRealEstateProperties(MarsApiFilter.SHOW_ALL.value)
     }
 
     /**
      * Sets the value of the status LiveData to the Mars API status.
      */
-    private fun getMarsRealEstateProperties() {
+    private fun getMarsRealEstateProperties(show: String) {
+
+        /**
+         * All coroutine launched in this scope is automatically canceled if the ViewModel is cleared.
+         */
+        viewModelScope.launch {
+            try {
+                val propertyList = MarsApi.retrofitService.getProperties(show)
+                _responseMarsObj.value = propertyList
+                Log.i("ViewModel", _responseMarsObj.value.toString())
+            } catch (e: Exception) {
+                e.message
+            }
+        }
         /**
          * this was the old way of using retrofit with callBacks pattern now
          * Using corotines insted of callback ...
@@ -68,18 +88,19 @@ class OverviewViewModel : ViewModel() {
 //
 //        })
 
-        /**
-         * All coroutine launched in this scope is automatically canceled if the ViewModel is cleared.
-         */
-        viewModelScope.launch {
-            try {
-                val propertyList = MarsApi.retrofitService.getProperties()
-                _responseMarsObj.value = propertyList
-                Log.i("ViewModel", _responseMarsObj.value.toString())
-            } catch (e: Exception) {
-                e.message
-            }
-        }
 
+    }
+
+
+    fun setStatusNavigate(marsProperty: MarsProperty) {
+        _status_navigate.value = marsProperty
+    }
+
+    fun clearStatusNavigate() {
+        _status_navigate.value = null
+    }
+
+    fun updateFilter(show: String) {
+        getMarsRealEstateProperties(show)
     }
 }

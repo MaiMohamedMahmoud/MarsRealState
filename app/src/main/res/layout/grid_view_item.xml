@@ -26,6 +26,7 @@
         <variable
             name="marsObj"
             type="com.example.android.marsrealestate.network.MarsProperty" />
+
     </data>
 
     <ImageView

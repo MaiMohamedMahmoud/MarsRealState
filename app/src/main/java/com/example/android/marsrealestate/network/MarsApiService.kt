@@ -25,9 +25,13 @@ package com.example.android.marsrealestate.network
 
 import retrofit2.Call
 import retrofit2.http.GET
+import retrofit2.http.Query
 
+enum class MarsApiFilter(val value: String) {
+    SHOW_RENT("rent"), SHOW_BUY("buy"), SHOW_ALL("all")
+}
 
 interface MarsApiService {
     @GET("realestate")
-    suspend fun getProperties(): List<MarsProperty>
+    suspend fun getProperties(@Query("filter") type: String): List<MarsProperty>
 }

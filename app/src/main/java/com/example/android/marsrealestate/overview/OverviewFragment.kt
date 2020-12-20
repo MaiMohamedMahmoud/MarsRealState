@@ -22,11 +22,13 @@ import android.view.*
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.android.marsrealestate.R
 import com.example.android.marsrealestate.databinding.FragmentOverviewBinding
 import com.example.android.marsrealestate.databinding.GridViewItemBinding
+import com.example.android.marsrealestate.network.MarsApiFilter
 
 /**
  * This fragment shows the the status of the Mars real-estate web services transaction.
@@ -35,7 +37,7 @@ class OverviewFragment : Fragment() {
 
     /**
      * Lazily initialize our [OverviewViewModel].
-     * which mean the viewmodel is created the first time it is uesed
+     * which mean the viewmodel is created the first time it is used
      */
     private val viewModel: OverviewViewModel by lazy {
         ViewModelProvider(this).get(OverviewViewModel::class.java)
@@ -55,15 +57,26 @@ class OverviewFragment : Fragment() {
         // Giving the binding access to the OverviewViewModel
         binding.viewModel = viewModel
 
-        val adapter = PhotoGridAdapter()
+        val adapter = PhotoGridAdapter(PhotoGridAdapter.OnClickListener {
+            viewModel.setStatusNavigate(it)
+        })
         val manager = GridLayoutManager(context, 2, GridLayoutManager.VERTICAL, false)
 
         viewModel.responseMarsProperty.observe(viewLifecycleOwner, Observer {
             adapter.submitList(it)
         })
 
+        viewModel.status_navigate.observe(viewLifecycleOwner, Observer {
+            if (it != null) {
+                findNavController().navigate(OverviewFragmentDirections.actionShowDetail(it))
+                viewModel.clearStatusNavigate()
+            }
+        })
         binding.marsPropRecycle.layoutManager = manager
         binding.marsPropRecycle.adapter = adapter
+
+
+
         setHasOptionsMenu(true)
         return binding.root
     }
@@ -74,5 +87,16 @@ class OverviewFragment : Fragment() {
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         inflater.inflate(R.menu.overflow_menu, menu)
         super.onCreateOptionsMenu(menu, inflater)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        viewModel.updateFilter(
+                when (item.itemId) {
+                    R.id.show_rent_menu -> MarsApiFilter.SHOW_RENT.value
+                    R.id.show_buy_menu -> MarsApiFilter.SHOW_BUY.value
+                    else -> MarsApiFilter.SHOW_ALL.value
+                }
+        )
+        return true
     }
 }
